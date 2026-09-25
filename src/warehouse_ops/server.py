@@ -1,0 +1,45 @@
+"""
+Warehouse Ops MCP server.
+
+Run locally over stdio (how Claude Desktop and Claude Code launch it):
+    uv run warehouse-ops-mcp
+"""
+
+from mcp.server.mcpserver import MCPServer
+from mcp.types import ToolAnnotations
+
+from warehouse_ops.db import query
+from warehouse_ops.tools import docks, yard
+
+mcp = MCPServer(
+    name="warehouse-ops",
+    title="Warehouse Ops",
+    version="0.2.0",
+    instructions=(
+        "Tools for distribution center operations: yard trailers, dock doors, "
+        "and appointments. Call list_sites first if you don't know the site codes. "
+        "All timestamps are UTC. Data is synthetic, for demonstration."
+    ),
+)
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False))
+def list_sites() -> dict:
+    """List all distribution center sites with their codes, locations and time zones."""
+    return {"sites": query("""
+        SELECT s.site_id, s.name, s.city, s.state, s.timezone,
+               (SELECT COUNT(*) FROM dock_doors d WHERE d.site_id = s.site_id) AS dock_doors
+        FROM sites s ORDER BY s.site_id
+    """)}
+
+
+yard.register(mcp)
+docks.register(mcp)
+
+
+def main() -> None:
+    mcp.run()  # stdio transport by default
+
+
+if __name__ == "__main__":
+    main()

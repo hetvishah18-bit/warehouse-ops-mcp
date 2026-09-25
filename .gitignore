@@ -1,0 +1,11 @@
+# Generated database (rebuild with: python data/seed.py)
+data/*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Secrets
+.env
