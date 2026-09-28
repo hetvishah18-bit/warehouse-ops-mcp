@@ -89,15 +89,20 @@ CREATE TABLE appointments (
     status           TEXT NOT NULL CHECK (status IN ('scheduled', 'arrived', 'completed', 'no_show', 'cancelled'))
 );
 
--- Written by the MCP server later (Phase 4). Empty after seeding.
+-- Written by the MCP server's action tools. Empty after seeding.
 CREATE TABLE trailer_flags (
-    flag_id     INTEGER PRIMARY KEY,
-    trailer_id  TEXT NOT NULL REFERENCES trailers(trailer_id),
-    reason      TEXT NOT NULL,
-    flagged_by  TEXT NOT NULL,
-    flagged_at  TEXT NOT NULL,
-    resolved_at TEXT
+    flag_id         INTEGER PRIMARY KEY,
+    trailer_id      TEXT NOT NULL REFERENCES trailers(trailer_id),
+    site_id         TEXT NOT NULL REFERENCES sites(site_id),
+    reason          TEXT NOT NULL,
+    priority        TEXT NOT NULL CHECK (priority IN ('normal', 'urgent')),
+    flagged_by      TEXT NOT NULL,
+    flagged_at      TEXT NOT NULL,
+    resolved_at     TEXT,
+    resolved_by     TEXT,
+    resolution_note TEXT
 );
+CREATE INDEX idx_flags_open ON trailer_flags (site_id, resolved_at);
 
 -- ---------------------------------------------------------------------
 -- Inventory side: SKUs, storage locations, stock, and pick history

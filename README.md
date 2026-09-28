@@ -32,6 +32,18 @@ uv run pytest                  # run the tests
 | Inventory | `get_sku_inventory` | Where is the stock, and how many days of supply? |
 | Inventory | `get_replenishment_needs` | Which pick faces are about to run out? |
 | Inventory | `get_location_contents` | What's in this location? |
+| Actions | `list_trailer_flags` | What's on the yard team's worklist? |
+| Actions | `flag_trailer_for_pull` | Flag a trailer to be moved (write, local mode only) |
+| Actions | `resolve_trailer_flag` | Close a flag once handled (write, local mode only) |
+
+## Running modes
+
+| Mode | Command | Writes |
+|---|---|---|
+| Local (Claude Desktop / Code) | `uv run warehouse-ops-mcp` | On |
+| Remote (HTTP) | `uv run warehouse-ops-mcp --transport http` then connect to `http://localhost:8000/mcp` | Off |
+
+Override with `WAREHOUSE_ALLOW_WRITES=true` or `false`. Write tools are validated, never delete data, and record who did what and when.
 
 ## Resources
 

@@ -18,7 +18,7 @@ async def test_everything_is_registered():
         tools = {t.name for t in (await client.list_tools()).tools}
         assert {"list_sites", "get_yard_status", "get_slotting_candidates",
                 "get_replenishment_needs"} <= tools
-        assert len(tools) == 15
+        assert len(tools) == 18  # 15 read + list_trailer_flags + 2 writes (local mode)
         prompts = {p.name for p in (await client.list_prompts()).prompts}
         assert prompts == {"daily_yard_briefing", "slotting_review"}
 
@@ -42,3 +42,19 @@ async def test_prompt_mentions_the_site():
     async with Client(mcp) as client:
         prompt = await client.get_prompt("slotting_review", {"site_id": "soc1"})
         assert "SOC1" in prompt.messages[0].content.text
+
+
+async def test_remote_mode_is_read_only():
+    from warehouse_ops.server import create_server
+    async with Client(create_server(allow_writes=False)) as client:
+        tools = {t.name for t in (await client.list_tools()).tools}
+        assert "list_trailer_flags" in tools
+        assert "flag_trailer_for_pull" not in tools
+        assert "resolve_trailer_flag" not in tools
+
+
+async def test_write_tools_are_annotated_as_writes():
+    async with Client(mcp) as client:
+        tools = {t.name: t for t in (await client.list_tools()).tools}
+        assert tools["flag_trailer_for_pull"].annotations.read_only_hint is False
+        assert tools["get_yard_status"].annotations.read_only_hint is True

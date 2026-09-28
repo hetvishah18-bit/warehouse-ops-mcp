@@ -1,7 +1,8 @@
 """
 Database access for the MCP tools.
 
-- Connections are opened READ-ONLY, so no tool can modify data by accident.
+- Read tools use a READ-ONLY connection, so they cannot modify data by accident.
+- Only the action tools write, through execute(), and only when writes are enabled.
 - Queries always use parameters (?), never string formatting, to prevent SQL injection.
 - Rows come back as plain dicts, which the MCP server turns into JSON for Claude.
 - Expected problems (bad site code, bad date) raise ToolError, whose message
@@ -34,6 +35,25 @@ def connect() -> sqlite3.Connection:
     conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def writes_enabled(default: bool) -> bool:
+    """WAREHOUSE_ALLOW_WRITES=true/false overrides the default for this transport."""
+    value = os.environ.get("WAREHOUSE_ALLOW_WRITES")
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+def execute(sql: str, params: tuple | list = ()) -> int:
+    """Run one INSERT/UPDATE in its own transaction. Returns the new row id."""
+    path = db_path()
+    if not path.exists():
+        raise FileNotFoundError(f"Database not found at {path}.")
+    with sqlite3.connect(path) as conn:
+        conn.execute("PRAGMA foreign_keys = ON")
+        cur = conn.execute(sql, params)
+        return cur.lastrowid
 
 
 def query(sql: str, params: tuple | list = ()) -> list[dict]:
