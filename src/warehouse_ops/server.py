@@ -9,15 +9,19 @@ from mcp.server.mcpserver import MCPServer
 from mcp.types import ToolAnnotations
 
 from warehouse_ops.db import query
-from warehouse_ops.tools import docks, yard
+from warehouse_ops.prompts import briefings
+from warehouse_ops.resources import layout, sops
+from warehouse_ops.tools import docks, inventory, slotting, yard
 
 mcp = MCPServer(
     name="warehouse-ops",
     title="Warehouse Ops",
-    version="0.2.0",
+    version="0.3.0",
     instructions=(
         "Tools for distribution center operations: yard trailers, dock doors, "
-        "and appointments. Call list_sites first if you don't know the site codes. "
+        "appointments, SKU velocity, slotting and inventory. Call list_sites first "
+        "if you don't know the site codes. SOPs are available as resources under "
+        "warehouse://sops/ and site layouts under warehouse://sites/{site_id}/layout. "
         "All timestamps are UTC. Data is synthetic, for demonstration."
     ),
 )
@@ -35,6 +39,11 @@ def list_sites() -> dict:
 
 yard.register(mcp)
 docks.register(mcp)
+slotting.register(mcp)
+inventory.register(mcp)
+layout.register(mcp)
+sops.register(mcp)
+briefings.register(mcp)
 
 
 def main() -> None:
